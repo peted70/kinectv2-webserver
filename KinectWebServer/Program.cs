@@ -1,13 +1,11 @@
 ﻿using Microsoft.Kinect;
-using Newtonsoft.Json;
-using SuperSocket.SocketBase;
 using SuperSocket.SocketBase.Config;
 using SuperWebSocket;
 using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace KinectWebServer
 {
@@ -23,13 +21,20 @@ namespace KinectWebServer
         static MultiSourceFrameReader msfr;
         static WebSocketServer appServer;
         static ColorFrameData colorData = new ColorFrameData();
+        static byte[] encodedBytes;
 
         static void Main(string[] args)
         {
+            Console.WriteLine("Press any key to start the WebSocketServer!");
+
+            Console.ReadKey();
+            Console.WriteLine();
+
             ks = KinectSensor.GetDefault();
 
             var fd = ks.ColorFrameSource.CreateFrameDescription(ColorImageFormat.Bgra);
-            colorData.Data = new byte[fd.BytesPerPixel * fd.LengthInPixels];
+            uint frameSize = fd.BytesPerPixel * fd.LengthInPixels;
+            colorData.Data = new byte[frameSize];
             colorData.Format = ColorImageFormat.Bgra;
 
             msfr = ks.OpenMultiSourceFrameReader(FrameSourceTypes.Body | FrameSourceTypes.Color);
@@ -37,16 +42,12 @@ namespace KinectWebServer
             msfr.MultiSourceFrameArrived += msfr_MultiSourceFrameArrived;
             ks.Open();
 
-            Console.WriteLine("Press any key to start the WebSocketServer!");
-
-            Console.ReadKey();
-            Console.WriteLine();
-
             appServer = new WebSocketServer();
 
             var config = new ServerConfig();
             config.Name = "kinect";
             config.Port = 2012;
+            config.MaxRequestLength = (int)frameSize;
 
             // Setup the appServer 
             if (!appServer.Setup(config)) //Setup with listening port 
@@ -55,8 +56,6 @@ namespace KinectWebServer
                 Console.ReadKey();
                 return;
             }
-
-            //appServer.NewMessageReceived += new SessionHandler<WebSocketSession, string>(appServer_NewMessageReceived);
 
             Console.WriteLine();
 
@@ -93,10 +92,12 @@ namespace KinectWebServer
                 return;
 
             bool colorRead = false;
+            FrameDescription fd = null;
             if (multiFrame.ColorFrameReference != null)
             {
                 using (var cf = multiFrame.ColorFrameReference.AcquireFrame())
                 {
+                    fd = cf.ColorFrameSource.FrameDescription;
                     cf.CopyConvertedFrameDataToArray(colorData.Data, colorData.Format);
                     colorRead = true;
                 }
@@ -104,31 +105,42 @@ namespace KinectWebServer
 
             if (colorRead == true)
             {
-                SendColorDataAsync(colorData);
+                SendColorData(colorData, fd);
             }
         }
 
-        private async static Task SendColorDataAsync(ColorFrameData data)
+        private static void SendColorData(ColorFrameData data, FrameDescription fd)
         {
             if (data == null)
                 return;
             var sessions = appServer.GetAllSessions();
+            if (sessions.Count() < 1)
+                return;
+
+            var dpiX = 96.0;
+            var dpiY = 96.0;
+            var pixelFormat = PixelFormats.Bgra32;
+            var bytesPerPixel = (pixelFormat.BitsPerPixel) / 8;
+            var stride = bytesPerPixel * fd.Width;
+
+            var bitmap = BitmapSource.Create(fd.Width, fd.Height, dpiX, dpiY,
+                                             pixelFormat, null, data.Data, (int)stride);
+            var encoder = new JpegBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(bitmap));
+
+            using (var ms = new MemoryStream())
+            using (var br = new BinaryReader(ms))
+            {
+                encoder.Save(ms);
+                ms.Flush();
+                ms.Position = 0;
+                encodedBytes = br.ReadBytes((int)ms.Length);
+            }
+
             foreach (var session in sessions)
             {
-                var str = await JsonConvert.SerializeObjectAsync(data);
-                if (!string.IsNullOrEmpty(str))
-                {
-                    //Console.WriteLine("Sending Colour Frame");
-                    // serialise color frame data and send
-                    session.Send(str);
-                }
+                session.Send(encodedBytes, 0, encodedBytes.Length);
             }
         }
-
-        //static void appServer_NewMessageReceived(WebSocketSession session, string message)
-        //{
-        //    //Send the received message back 
-        //    session.Send("Server: " + message);
-        //}
     }
 }

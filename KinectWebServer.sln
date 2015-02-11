@@ -1,9 +1,31 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.22512.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KinectWebServer", "KinectWebServer\KinectWebServer.csproj", "{74862729-BA5E-4DC4-BF89-F99ACCE274F5}"
+EndProject
+Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "TestSite(1)", "http://localhost:29934", "{208ACD3E-1073-40DA-9C2B-3212F3DEA3CE}"
+	ProjectSection(WebsiteProperties) = preProject
+		UseIISExpress = "true"
+		TargetFrameworkMoniker = ".NETFramework,Version%3Dv4.5"
+		Debug.AspNetCompiler.VirtualPath = "/localhost_29934"
+		Debug.AspNetCompiler.PhysicalPath = "TestSite\"
+		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_29934\"
+		Debug.AspNetCompiler.Updateable = "true"
+		Debug.AspNetCompiler.ForceOverwrite = "true"
+		Debug.AspNetCompiler.FixedNames = "false"
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.VirtualPath = "/localhost_29934"
+		Release.AspNetCompiler.PhysicalPath = "TestSite\"
+		Release.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_29934\"
+		Release.AspNetCompiler.Updateable = "true"
+		Release.AspNetCompiler.ForceOverwrite = "true"
+		Release.AspNetCompiler.FixedNames = "false"
+		Release.AspNetCompiler.Debug = "False"
+		SlnRelativePath = "TestSite\"
+		DefaultWebSiteLanguage = "Visual C#"
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +37,10 @@ Global
 		{74862729-BA5E-4DC4-BF89-F99ACCE274F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{74862729-BA5E-4DC4-BF89-F99ACCE274F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{74862729-BA5E-4DC4-BF89-F99ACCE274F5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{208ACD3E-1073-40DA-9C2B-3212F3DEA3CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{208ACD3E-1073-40DA-9C2B-3212F3DEA3CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{208ACD3E-1073-40DA-9C2B-3212F3DEA3CE}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{208ACD3E-1073-40DA-9C2B-3212F3DEA3CE}.Release|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
