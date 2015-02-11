@@ -1,7 +1,9 @@
 ﻿using Microsoft.Kinect;
+using Newtonsoft.Json;
 using SuperSocket.SocketBase.Config;
 using SuperWebSocket;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows.Media;
@@ -9,6 +11,12 @@ using System.Windows.Media.Imaging;
 
 namespace KinectWebServer
 {
+    public class JointEx
+    {
+        public Joint Joint { get; set; }
+        public ColorSpacePoint ColorSpacePos { get; set; }
+    };
+
     public class ColorFrameData
     {
         public byte[] Data { get; set; }
@@ -22,7 +30,14 @@ namespace KinectWebServer
         static WebSocketServer appServer;
         static ColorFrameData colorData = new ColorFrameData();
         static byte[] encodedBytes;
-
+        static Body[] bodies;
+        static List<Body> trackedBodies = new List<Body>();
+        static List<Dictionary<JointType, JointEx>> mappedJoints = new List<Dictionary<JointType, JointEx>>();
+        static CameraSpacePoint[] cameraTempPoint = new CameraSpacePoint[1];
+        static ColorSpacePoint[] colorTempPoint = new ColorSpacePoint[1];
+        const int NumJoints = 25;
+        static ColorSpacePoint[] colorTempPoints = new ColorSpacePoint[NumJoints];
+        static List<ColorSpacePoint[]> bodyTransferData = new List<ColorSpacePoint[]>();
         static void Main(string[] args)
         {
             Console.WriteLine("Press any key to start the WebSocketServer!");
@@ -40,6 +55,8 @@ namespace KinectWebServer
             msfr = ks.OpenMultiSourceFrameReader(FrameSourceTypes.Body | FrameSourceTypes.Color);
 
             msfr.MultiSourceFrameArrived += msfr_MultiSourceFrameArrived;
+
+            bodies = new Body[ks.BodyFrameSource.BodyCount];
             ks.Open();
 
             appServer = new WebSocketServer();
@@ -102,10 +119,48 @@ namespace KinectWebServer
                     colorRead = true;
                 }
             }
+            bool bodyRead = false;
+            if (multiFrame.BodyFrameReference != null)
+            {
+                using (var bf = multiFrame.BodyFrameReference.AcquireFrame())
+                {
+                    bf.GetAndRefreshBodyData(bodies);
+                    bodyRead = true;
+                }
+            }
 
             if (colorRead == true)
             {
                 SendColorData(colorData, fd);
+            }
+            if (bodyRead == true)
+            {
+                SendBodyData();
+            }
+        }
+
+        private static void SendBodyData()
+        {
+            var sessions = appServer.GetAllSessions();
+            if (sessions.Count() < 1)
+                return;
+
+            trackedBodies = bodies.Where(b => b.IsTracked == true).ToList();
+            if (trackedBodies.Count() < 1)
+                return;
+
+            bodyTransferData.Clear();
+            foreach (var body in trackedBodies)
+            {
+                var list = body.Joints.Select(j => j.Value).Select(p => p.Position).ToArray();
+                ks.CoordinateMapper.MapCameraPointsToColorSpace(list, colorTempPoints);
+                bodyTransferData.Add(colorTempPoints);
+            }
+
+            var str = JsonConvert.SerializeObject(bodyTransferData);
+            foreach (var session in sessions)
+            {
+                session.Send(str);
             }
         }
 
