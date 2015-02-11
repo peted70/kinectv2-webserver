@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
         console.log('error - ' + err);
     };
     socket.onmessage = function (event) {
-        context.clearRect(0, 0, canvasWidth, canvasHeight);
+        //context.clearRect(0, 0, canvasWidth, canvasHeight);
         if (event.data instanceof Blob) {
             var colData = window.URL.createObjectURL(event.data);
             feed.src = colData;
