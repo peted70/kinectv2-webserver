@@ -129,25 +129,39 @@ namespace KinectWebServer
                 }
             }
 
+            byte[] data = null;
             if (colorRead == true)
             {
-                SendColorData(colorData, fd);
+                data = SendColorData(colorData, fd);
             }
+            string bodyData = null;
             if (bodyRead == true)
             {
-                SendBodyData();
+                bodyData = SerialiseBodyData();
             }
-        }
 
-        private static void SendBodyData()
-        {
             var sessions = appServer.GetAllSessions();
             if (sessions.Count() < 1)
                 return;
 
+            foreach (var session in sessions)
+            {
+                if (data != null)
+                {
+                    session.Send(data, 0, data.Length);
+                }
+                if (bodyData != null)
+                {
+                    session.Send(bodyData);
+                }
+            }
+        }
+
+        private static string SerialiseBodyData()
+        {
             trackedBodies = bodies.Where(b => b.IsTracked == true).ToList();
             if (trackedBodies.Count() < 1)
-                return;
+                return null;
 
             bodyTransferData.Clear();
             foreach (var body in trackedBodies)
@@ -158,19 +172,13 @@ namespace KinectWebServer
             }
 
             var str = JsonConvert.SerializeObject(bodyTransferData);
-            foreach (var session in sessions)
-            {
-                session.Send(str);
-            }
+            return str;
         }
 
-        private static void SendColorData(ColorFrameData data, FrameDescription fd)
+        private static byte[] SendColorData(ColorFrameData data, FrameDescription fd)
         {
             if (data == null)
-                return;
-            var sessions = appServer.GetAllSessions();
-            if (sessions.Count() < 1)
-                return;
+                return null;
 
             var dpiX = 96.0;
             var dpiY = 96.0;
@@ -192,10 +200,7 @@ namespace KinectWebServer
                 encodedBytes = br.ReadBytes((int)ms.Length);
             }
 
-            foreach (var session in sessions)
-            {
-                session.Send(encodedBytes, 0, encodedBytes.Length);
-            }
+            return encodedBytes;
         }
     }
 }
