@@ -63,7 +63,7 @@ namespace KinectWebServer
 
             var config = new ServerConfig();
             config.Name = "kinect";
-            config.Port = 2012;
+            config.Port = 1337;
             config.MaxRequestLength = (int)frameSize;
 
             // Setup the appServer 

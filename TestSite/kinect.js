@@ -1,4 +1,4 @@
-﻿var socket;
+var socket;
 var myImage;
 var context;
 var feed;
@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
 
     myImage = document.getElementById('myImg');
     console.log('about to open socket');
-    socket = new WebSocket('ws://localhost:2012/kinect');
+    socket = new WebSocket('ws://localhost:1337/kinect');
     console.log('attempted to open socket');
 
     socket.onopen = function () {
