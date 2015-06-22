@@ -32,13 +32,13 @@ document.addEventListener("DOMContentLoaded", function (event) {
         console.log('error - ' + err);
     };
     socket.onmessage = function (event) {
-        console.log(event);
         //context.clearRect(0, 0, canvasWidth, canvasHeight);
         if (event.data instanceof Blob) {
             var colData = window.URL.createObjectURL(event.data);
             feed.src = colData;
             window.URL.revokeObjectURL(colData);
         } else {
+            console.log(event.data);
             var bodies = JSON.parse(event.data);
             for (var i = 0; i < bodies.length; i++) {
                 var jointDictionary = bodies[i];

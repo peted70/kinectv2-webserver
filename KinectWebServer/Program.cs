@@ -35,9 +35,9 @@ namespace KinectWebServer
         static List<Dictionary<JointType, JointEx>> mappedJoints = new List<Dictionary<JointType, JointEx>>();
         static CameraSpacePoint[] cameraTempPoint = new CameraSpacePoint[1];
         static ColorSpacePoint[] colorTempPoint = new ColorSpacePoint[1];
-        const int NumJoints = 1;
+        const int NumJoints = 4;
         static ColorSpacePoint[] colorTempPoints = new ColorSpacePoint[NumJoints];
-        static List<ColorSpacePoint[]> bodyTransferData = new List<ColorSpacePoint[]>();
+        static List<CameraSpacePoint[]> bodyTransferData = new List<CameraSpacePoint[]>();
         static void Main(string[] args)
         {
             Console.WriteLine("Press any key to start the WebSocketServer!");
@@ -132,7 +132,7 @@ namespace KinectWebServer
             byte[] data = null;
             if (colorRead == true)
             {
-                data = SendColorData(colorData, fd);
+                //data = SendColorData(colorData, fd);
             }
             string bodyData = null;
             if (bodyRead == true)
@@ -152,7 +152,10 @@ namespace KinectWebServer
                 }
                 if (bodyData != null)
                 {
-                    session.Send(bodyData);
+                    if (bodyData != "[]")
+                    {
+                        session.Send(bodyData);
+                    }
                 }
             }
         }
@@ -166,11 +169,17 @@ namespace KinectWebServer
             bodyTransferData.Clear();
             foreach (var body in trackedBodies)
             {
-                var list = body.Joints.Where(a => a.Key == JointType.HandLeft).Select(j => j.Value).Select(p => p.Position).ToArray();
-                if (list.Count() > 0)
+                if (body.HandLeftState == HandState.Closed && body.HandLeftConfidence == TrackingConfidence.High)
                 {
-                    ks.CoordinateMapper.MapCameraPointsToColorSpace(list, colorTempPoints);
-                    bodyTransferData.Add(colorTempPoints);
+                    var list = body.Joints.Where(a => a.Key == JointType.HandLeft
+                        || a.Key == JointType.HandTipLeft
+                        || a.Key == JointType.ThumbLeft
+                        || a.Key == JointType.WristLeft).Select(j => j.Value).Select(p => p.Position).ToArray();
+                    if (list.Count() > 0)
+                    {
+                        ks.CoordinateMapper.MapCameraPointsToColorSpace(list, colorTempPoints);
+                        bodyTransferData.Add(list);
+                    }
                 }
             }
 
