@@ -35,7 +35,7 @@ namespace KinectWebServer
         static List<Dictionary<JointType, JointEx>> mappedJoints = new List<Dictionary<JointType, JointEx>>();
         static CameraSpacePoint[] cameraTempPoint = new CameraSpacePoint[1];
         static ColorSpacePoint[] colorTempPoint = new ColorSpacePoint[1];
-        const int NumJoints = 25;
+        const int NumJoints = 1;
         static ColorSpacePoint[] colorTempPoints = new ColorSpacePoint[NumJoints];
         static List<ColorSpacePoint[]> bodyTransferData = new List<ColorSpacePoint[]>();
         static void Main(string[] args)
@@ -166,9 +166,12 @@ namespace KinectWebServer
             bodyTransferData.Clear();
             foreach (var body in trackedBodies)
             {
-                var list = body.Joints.Select(j => j.Value).Select(p => p.Position).ToArray();
-                ks.CoordinateMapper.MapCameraPointsToColorSpace(list, colorTempPoints);
-                bodyTransferData.Add(colorTempPoints);
+                var list = body.Joints.Where(a => a.Key == JointType.HandLeft).Select(j => j.Value).Select(p => p.Position).ToArray();
+                if (list.Count() > 0)
+                {
+                    ks.CoordinateMapper.MapCameraPointsToColorSpace(list, colorTempPoints);
+                    bodyTransferData.Add(colorTempPoints);
+                }
             }
 
             var str = JsonConvert.SerializeObject(bodyTransferData);
