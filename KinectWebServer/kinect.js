@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
         console.log('socket opened');
     };
     socket.onclose = function () {
-        console.log('socket closed');
+        console.log('socket');
     };
     socket.onerror = function (err) {
         console.log('error - ' + err);
